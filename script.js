@@ -1,30 +1,48 @@
 /* =========================================================
-   RentEase - Room & Hostel Management
-   Frontend-only JavaScript
-   GitHub Pages Compatible
-   ========================================================= */
+   RentEase
+   Smart Room & Hostel Management System
+   Frontend Only - GitHub Pages Compatible
+   LocalStorage Based
+========================================================= */
 
 "use strict";
 
+
 /* =========================================================
    1. APPLICATION STATE
-   ========================================================= */
+========================================================= */
 
 const APP = {
-    storageKey: "rentease_rooms",
+    roomsKey: "rentease_rooms",
+    tenantsKey: "rentease_tenants",
+    paymentsKey: "rentease_payments",
+    maintenanceKey: "rentease_maintenance",
+    noticesKey: "rentease_notices",
+    bookingsKey: "rentease_bookings",
     userKey: "rentease_user",
     themeKey: "rentease_theme"
 };
 
+
 let rooms = [];
+let tenants = [];
+let payments = [];
+let maintenanceRequests = [];
+let notices = [];
+let bookings = [];
+
 let currentEditingId = null;
+let currentUser = null;
+
+let revenueChart = null;
 
 
 /* =========================================================
    2. DEMO ROOM DATA
-   ========================================================= */
+========================================================= */
 
 const demoRooms = [
+
     {
         id: 1,
         roomNumber: "A-101",
@@ -36,6 +54,7 @@ const demoRooms = [
         amenities: ["WiFi", "AC", "Attached Bath"],
         status: "Occupied"
     },
+
     {
         id: 2,
         roomNumber: "A-102",
@@ -47,6 +66,7 @@ const demoRooms = [
         amenities: ["WiFi", "Fan", "Study Table"],
         status: "Available"
     },
+
     {
         id: 3,
         roomNumber: "B-201",
@@ -58,6 +78,7 @@ const demoRooms = [
         amenities: ["WiFi", "Laundry", "Parking"],
         status: "Available"
     },
+
     {
         id: 4,
         roomNumber: "B-202",
@@ -69,6 +90,7 @@ const demoRooms = [
         amenities: ["WiFi", "AC", "Laundry"],
         status: "Occupied"
     },
+
     {
         id: 5,
         roomNumber: "C-301",
@@ -80,6 +102,7 @@ const demoRooms = [
         amenities: ["WiFi", "AC", "TV"],
         status: "Available"
     },
+
     {
         id: 6,
         roomNumber: "C-302",
@@ -91,16 +114,192 @@ const demoRooms = [
         amenities: ["WiFi", "AC", "Attached Bath"],
         status: "Occupied"
     }
+
 ];
 
 
 /* =========================================================
-   3. INITIALIZE APPLICATION
-   ========================================================= */
+   3. DEMO TENANTS
+========================================================= */
+
+const demoTenants = [
+
+    {
+        id: 1,
+        name: "Rahul Sharma",
+        room: "A-101",
+        phone: "9876543210",
+        joinDate: "2026-08-10",
+        rent: 6500,
+        payment: "Paid"
+    },
+
+    {
+        id: 2,
+        name: "Priya Patel",
+        room: "A-102",
+        phone: "9876543211",
+        joinDate: "2026-08-15",
+        rent: 5000,
+        payment: "Paid"
+    },
+
+    {
+        id: 3,
+        name: "Arjun Kumar",
+        room: "B-201",
+        phone: "9876543212",
+        joinDate: "2026-08-20",
+        rent: 4200,
+        payment: "Pending"
+    },
+
+    {
+        id: 4,
+        name: "Sneha Reddy",
+        room: "B-202",
+        phone: "9876543213",
+        joinDate: "2026-08-22",
+        rent: 4800,
+        payment: "Paid"
+    },
+
+    {
+        id: 5,
+        name: "Vikram Singh",
+        room: "C-302",
+        phone: "9876543214",
+        joinDate: "2026-09-01",
+        rent: 5500,
+        payment: "Pending"
+    }
+
+];
+
+
+/* =========================================================
+   4. DEMO PAYMENTS
+========================================================= */
+
+const demoPayments = [
+
+    {
+        id: 1,
+        tenant: "Rahul Sharma",
+        amount: 6500,
+        date: "2026-10-01",
+        method: "UPI",
+        status: "Paid"
+    },
+
+    {
+        id: 2,
+        tenant: "Priya Patel",
+        amount: 5000,
+        date: "2026-10-01",
+        method: "UPI",
+        status: "Paid"
+    },
+
+    {
+        id: 3,
+        tenant: "Arjun Kumar",
+        amount: 4200,
+        date: "2026-10-02",
+        method: "Cash",
+        status: "Pending"
+    },
+
+    {
+        id: 4,
+        tenant: "Sneha Reddy",
+        amount: 4800,
+        date: "2026-10-02",
+        method: "Bank",
+        status: "Paid"
+    }
+
+];
+
+
+/* =========================================================
+   5. DEMO MAINTENANCE
+========================================================= */
+
+const demoMaintenance = [
+
+    {
+        id: 1,
+        title: "AC not working",
+        room: "B-202",
+        priority: "High",
+        status: "Open",
+        date: "2026-10-04"
+    },
+
+    {
+        id: 2,
+        title: "Bathroom tap leakage",
+        room: "A-102",
+        priority: "Medium",
+        status: "In Progress",
+        date: "2026-10-03"
+    },
+
+    {
+        id: 3,
+        title: "WiFi issue",
+        room: "C-302",
+        priority: "Low",
+        status: "Resolved",
+        date: "2026-10-01"
+    }
+
+];
+
+
+/* =========================================================
+   6. DEMO NOTICES
+========================================================= */
+
+const demoNotices = [
+
+    {
+        id: 1,
+        title: "Monthly Rent Reminder",
+        message: "Please complete your monthly rent payment before the 5th.",
+        date: "2026-10-01",
+        type: "Payment"
+    },
+
+    {
+        id: 2,
+        title: "Hostel Maintenance",
+        message: "Common area maintenance will be carried out this Sunday.",
+        date: "2026-10-03",
+        type: "Maintenance"
+    },
+
+    {
+        id: 3,
+        title: "New Hostel Rules",
+        message: "Please check the updated hostel guidelines.",
+        date: "2026-10-05",
+        type: "Important"
+    }
+
+];
+
+
+/* =========================================================
+   7. INITIALIZE APPLICATION
+========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    initializeRooms();
+    initializeStorage();
+
+    initializeLogin();
 
     initializeTheme();
 
@@ -110,114 +309,208 @@ document.addEventListener("DOMContentLoaded", () => {
 
     initializeForms();
 
-    initializeAnimations();
+    initializeDashboard();
 
-    initializeCounters();
+    initializeCharts();
 
-    updateDashboard();
+    initializeButtons();
+
+    initializeMobileMenu();
+
+    initializeBackToTop();
+
+    initializeKeyboardShortcuts();
 
     renderRooms();
 
-    setupBackToTop();
+    renderTenants();
 
-    setupMobileMenu();
+    renderPayments();
 
-    setupGlobalClicks();
+    renderMaintenance();
 
-    checkLoginState();
+    renderNotices();
+
+    updateDashboard();
+
+    updateReports();
+
+    updateActivity();
+
+    updateFavoriteCount();
+
+    updateCurrentYear();
 
 });
 
 
 /* =========================================================
-   4. ROOM STORAGE
-   ========================================================= */
+   8. LOCAL STORAGE
+========================================================= */
 
-function initializeRooms() {
+function loadStorage(key, fallback) {
 
-    const savedRooms = localStorage.getItem(APP.storageKey);
+    const data = localStorage.getItem(key);
 
-    if (savedRooms) {
+    if (!data) {
 
-        try {
-            rooms = JSON.parse(savedRooms);
-        } catch (error) {
-            console.error("Unable to load saved rooms.");
-            rooms = [...demoRooms];
-            saveRooms();
-        }
+        localStorage.setItem(
+            key,
+            JSON.stringify(fallback)
+        );
 
-    } else {
+        return [...fallback];
 
-        rooms = [...demoRooms];
+    }
 
-        saveRooms();
+    try {
+
+        return JSON.parse(data);
+
+    } catch (error) {
+
+        return [...fallback];
 
     }
 
 }
 
 
-function saveRooms() {
+function saveStorage(key, data) {
 
     localStorage.setItem(
-        APP.storageKey,
-        JSON.stringify(rooms)
+        key,
+        JSON.stringify(data)
+    );
+
+}
+
+
+function initializeStorage() {
+
+    rooms = loadStorage(
+        APP.roomsKey,
+        demoRooms
+    );
+
+    tenants = loadStorage(
+        APP.tenantsKey,
+        demoTenants
+    );
+
+    payments = loadStorage(
+        APP.paymentsKey,
+        demoPayments
+    );
+
+    maintenanceRequests = loadStorage(
+        APP.maintenanceKey,
+        demoMaintenance
+    );
+
+    notices = loadStorage(
+        APP.noticesKey,
+        demoNotices
+    );
+
+    bookings = loadStorage(
+        APP.bookingsKey,
+        []
     );
 
 }
 
 
 /* =========================================================
-   5. LOGIN SYSTEM
-   ========================================================= */
+   9. LOGIN SYSTEM
+========================================================= */
 
-function checkLoginState() {
+function initializeLogin() {
 
-    const user = localStorage.getItem(APP.userKey);
+    const loginForm =
+        document.querySelector("#loginForm");
 
-    const loginSection = document.querySelector("#login");
-    const dashboardSection = document.querySelector("#dashboard");
+    if (loginForm) {
 
-    if (!user) {
-
-        if (dashboardSection) {
-            dashboardSection.classList.add("hidden");
-        }
-
-    } else {
-
-        if (loginSection) {
-            loginSection.classList.add("hidden");
-        }
-
-        if (dashboardSection) {
-            dashboardSection.classList.remove("hidden");
-        }
-
-        updateUserName();
+        loginForm.addEventListener(
+            "submit",
+            handleLogin
+        );
 
     }
+
+
+    const passwordToggle =
+        document.querySelector("#passwordToggle");
+
+    if (passwordToggle) {
+
+        passwordToggle.addEventListener(
+            "click",
+            togglePassword
+        );
+
+    }
+
+
+    const logoutBtn =
+        document.querySelector("#logoutBtn");
+
+    if (logoutBtn) {
+
+        logoutBtn.addEventListener(
+            "click",
+            logoutUser
+        );
+
+    }
+
+
+    const savedUser =
+        localStorage.getItem(
+            APP.userKey
+        );
+
+    if (savedUser) {
+
+        try {
+
+            currentUser =
+                JSON.parse(savedUser);
+
+        } catch {
+
+            currentUser = null;
+
+        }
+
+    }
+
+
+    updateLoginUI();
 
 }
 
 
-function loginUser(event) {
+function handleLogin(event) {
 
-    if (event) {
-        event.preventDefault();
-    }
+    event.preventDefault();
 
-    const emailInput = document.querySelector("#loginEmail");
-    const passwordInput = document.querySelector("#loginPassword");
+    const username =
+        document.querySelector(
+            "#loginUsername"
+        )?.value.trim();
 
-    const email = emailInput?.value.trim();
-    const password = passwordInput?.value.trim();
+    const password =
+        document.querySelector(
+            "#loginPassword"
+        )?.value.trim();
 
-    if (!email || !password) {
+
+    if (!username || !password) {
 
         showToast(
-            "Please enter email and password.",
+            "Please enter username and password.",
             "error"
         );
 
@@ -225,1061 +518,326 @@ function loginUser(event) {
 
     }
 
-    const user = {
-        name: email.split("@")[0],
-        email: email
+
+    if (
+        username !== "admin" ||
+        password !== "admin123"
+    ) {
+
+        showToast(
+            "Invalid login details. Use admin / admin123.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    currentUser = {
+
+        name: "Narotam",
+
+        username: username,
+
+        role: "Administrator"
+
     };
+
 
     localStorage.setItem(
         APP.userKey,
-        JSON.stringify(user)
+        JSON.stringify(currentUser)
     );
+
+
+    updateLoginUI();
 
     showToast(
         "Welcome to RentEase! 🎉",
         "success"
     );
 
-    setTimeout(() => {
+}
 
-        checkLoginState();
 
-        scrollToSection("dashboard");
+function updateLoginUI() {
 
-    }, 500);
+    const loginScreen =
+        document.querySelector(
+            "#loginScreen"
+        );
+
+    const app =
+        document.querySelector("#app");
+
+
+    if (currentUser) {
+
+        if (loginScreen) {
+
+            loginScreen.style.display =
+                "none";
+
+        }
+
+        if (app) {
+
+            app.style.display =
+                "flex";
+
+        }
+
+    } else {
+
+        if (loginScreen) {
+
+            loginScreen.style.display =
+                "flex";
+
+        }
+
+        if (app) {
+
+            app.style.display =
+                "none";
+
+        }
+
+    }
 
 }
 
 
 function logoutUser() {
 
-    localStorage.removeItem(APP.userKey);
+    localStorage.removeItem(
+        APP.userKey
+    );
+
+    currentUser = null;
 
     showToast(
-        "You have been logged out.",
+        "Logged out successfully.",
         "success"
     );
 
     setTimeout(() => {
-        location.reload();
+
+        updateLoginUI();
+
     }, 500);
 
 }
 
 
-function updateUserName() {
+function togglePassword() {
 
-    const userData = localStorage.getItem(APP.userKey);
+    const password =
+        document.querySelector(
+            "#loginPassword"
+        );
 
-    if (!userData) return;
+    const icon =
+        document.querySelector(
+            "#passwordToggle i"
+        );
 
-    try {
 
-        const user = JSON.parse(userData);
+    if (!password) return;
 
-        document.querySelectorAll(
-            "[data-user-name]"
-        ).forEach(element => {
-            element.textContent = user.name;
-        });
-
-    } catch (error) {
-        console.error(error);
-    }
-
-}
-
-
-/* =========================================================
-   6. NAVIGATION
-   ========================================================= */
-
-function initializeNavigation() {
-
-    document.querySelectorAll(
-        'a[href^="#"]'
-    ).forEach(link => {
-
-        link.addEventListener("click", event => {
-
-            const targetId = link.getAttribute("href");
-
-            if (
-                targetId &&
-                targetId !== "#"
-            ) {
-
-                event.preventDefault();
-
-                scrollToSection(targetId.substring(1));
-
-            }
-
-        });
-
-    });
-
-}
-
-
-function scrollToSection(id) {
-
-    const element = document.getElementById(id);
-
-    if (!element) return;
-
-    element.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-    });
-
-}
-
-
-/* =========================================================
-   7. MOBILE MENU
-   ========================================================= */
-
-function setupMobileMenu() {
-
-    const menuButton = document.querySelector(
-        "#menuToggle"
-    );
-
-    const navigation = document.querySelector(
-        "#mainNav"
-    );
-
-    if (!menuButton || !navigation) return;
-
-    menuButton.addEventListener("click", () => {
-
-        navigation.classList.toggle("active");
-
-        menuButton.classList.toggle("active");
-
-    });
-
-}
-
-
-/* =========================================================
-   8. ROOM RENDERING
-   ========================================================= */
-
-function renderRooms(list = rooms) {
-
-    const roomContainer =
-        document.querySelector("#roomsContainer") ||
-        document.querySelector("#roomContainer") ||
-        document.querySelector(".rooms-grid");
-
-    if (!roomContainer) return;
-
-    roomContainer.innerHTML = "";
-
-    if (list.length === 0) {
-
-        roomContainer.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-icon">🏠</div>
-                <h3>No rooms found</h3>
-                <p>Try changing your search or add a new room.</p>
-            </div>
-        `;
-
-        return;
-
-    }
-
-    list.forEach((room, index) => {
-
-        const availableBeds =
-            room.capacity - room.occupied;
-
-        const card = document.createElement("div");
-
-        card.className = "room-card reveal";
-
-        card.style.animationDelay =
-            `${index * 0.08}s`;
-
-        card.innerHTML = `
-
-            <div class="room-card-top">
-
-                <div>
-
-                    <span class="room-label">
-                        ROOM
-                    </span>
-
-                    <h3>
-                        ${escapeHTML(room.roomNumber)}
-                    </h3>
-
-                </div>
-
-                <span class="status-badge ${getStatusClass(room)}">
-                    ${getRoomStatus(room)}
-                </span>
-
-            </div>
-
-
-            <div class="room-hostel">
-
-                <span>🏢</span>
-
-                <span>
-                    ${escapeHTML(room.hostel)}
-                </span>
-
-            </div>
-
-
-            <div class="room-info">
-
-                <div>
-                    <span class="info-label">
-                        Type
-                    </span>
-
-                    <strong>
-                        ${escapeHTML(room.type)}
-                    </strong>
-                </div>
-
-                <div>
-                    <span class="info-label">
-                        Capacity
-                    </span>
-
-                    <strong>
-                        ${room.capacity} Bed${room.capacity > 1 ? "s" : ""}
-                    </strong>
-                </div>
-
-                <div>
-                    <span class="info-label">
-                        Rent
-                    </span>
-
-                    <strong>
-                        ₹${Number(room.rent).toLocaleString("en-IN")}
-                    </strong>
-                </div>
-
-            </div>
-
-
-            <div class="occupancy">
-
-                <div class="occupancy-header">
-
-                    <span>
-                        Occupancy
-                    </span>
-
-                    <strong>
-                        ${room.occupied}/${room.capacity}
-                    </strong>
-
-                </div>
-
-                <div class="progress-bar">
-
-                    <div
-                        class="progress-fill"
-                        style="width:${getOccupancyPercentage(room)}%"
-                    ></div>
-
-                </div>
-
-                <small>
-                    ${availableBeds > 0
-                        ? `${availableBeds} bed${availableBeds > 1 ? "s" : ""} available`
-                        : "Fully occupied"}
-                </small>
-
-            </div>
-
-
-            <div class="amenities">
-
-                ${room.amenities
-                    .map(
-                        amenity =>
-                            `<span>${escapeHTML(amenity)}</span>`
-                    )
-                    .join("")}
-
-            </div>
-
-
-            <div class="room-actions">
-
-                <button
-                    class="btn btn-secondary"
-                    onclick="editRoom(${room.id})"
-                >
-                    ✏️ Edit
-                </button>
-
-                <button
-                    class="btn btn-danger"
-                    onclick="deleteRoom(${room.id})"
-                >
-                    🗑️ Delete
-                </button>
-
-            </div>
-
-        `;
-
-        roomContainer.appendChild(card);
-
-    });
-
-    observeRevealElements();
-
-}
-
-
-/* =========================================================
-   9. ROOM STATUS
-   ========================================================= */
-
-function getRoomStatus(room) {
-
-    if (room.occupied >= room.capacity) {
-        return "Occupied";
-    }
-
-    return "Available";
-
-}
-
-
-function getStatusClass(room) {
-
-    return room.occupied >= room.capacity
-        ? "occupied"
-        : "available";
-
-}
-
-
-function getOccupancyPercentage(room) {
-
-    if (!room.capacity) return 0;
-
-    return Math.min(
-        100,
-        Math.round(
-            (room.occupied / room.capacity) * 100
-        )
-    );
-
-}
-
-
-/* =========================================================
-   10. ADD ROOM
-   ========================================================= */
-
-function addRoom(event) {
-
-    if (event) {
-        event.preventDefault();
-    }
-
-    const roomNumber =
-        getInputValue("roomNumber");
-
-    const hostel =
-        getInputValue("hostelName");
-
-    const type =
-        getInputValue("roomType");
-
-    const rent =
-        Number(getInputValue("roomRent"));
-
-    const capacity =
-        Number(getInputValue("roomCapacity"));
-
-    const occupied =
-        Number(getInputValue("occupiedBeds")) || 0;
-
-    const amenitiesInput =
-        getInputValue("roomAmenities");
 
     if (
-        !roomNumber ||
-        !hostel ||
-        !type ||
-        !rent ||
-        !capacity
+        password.type === "password"
     ) {
 
-        showToast(
-            "Please fill all required room details.",
-            "error"
-        );
+        password.type = "text";
 
-        return;
+        if (icon) {
 
-    }
+            icon.className =
+                "fa-solid fa-eye-slash";
 
-    if (occupied > capacity) {
+        }
 
-        showToast(
-            "Occupied beds cannot exceed capacity.",
-            "error"
-        );
+    } else {
 
-        return;
+        password.type = "password";
 
-    }
+        if (icon) {
 
-    const amenities = amenitiesInput
-        ? amenitiesInput
-            .split(",")
-            .map(item => item.trim())
-            .filter(Boolean)
-        : ["WiFi"];
-
-    const newRoom = {
-
-        id: Date.now(),
-
-        roomNumber,
-
-        hostel,
-
-        type,
-
-        rent,
-
-        capacity,
-
-        occupied,
-
-        amenities,
-
-        status:
-            occupied >= capacity
-                ? "Occupied"
-                : "Available"
-
-    };
-
-    rooms.unshift(newRoom);
-
-    saveRooms();
-
-    renderRooms();
-
-    updateDashboard();
-
-    closeModal();
-
-    resetRoomForm();
-
-    showToast(
-        "Room added successfully! 🏠",
-        "success"
-    );
-
-}
-
-
-/* =========================================================
-   11. EDIT ROOM
-   ========================================================= */
-
-function editRoom(id) {
-
-    const room =
-        rooms.find(item => item.id === id);
-
-    if (!room) return;
-
-    currentEditingId = id;
-
-    setInputValue(
-        "roomNumber",
-        room.roomNumber
-    );
-
-    setInputValue(
-        "hostelName",
-        room.hostel
-    );
-
-    setInputValue(
-        "roomType",
-        room.type
-    );
-
-    setInputValue(
-        "roomRent",
-        room.rent
-    );
-
-    setInputValue(
-        "roomCapacity",
-        room.capacity
-    );
-
-    setInputValue(
-        "occupiedBeds",
-        room.occupied
-    );
-
-    setInputValue(
-        "roomAmenities",
-        room.amenities.join(", ")
-    );
-
-    const formTitle =
-        document.querySelector("#roomModalTitle");
-
-    if (formTitle) {
-        formTitle.textContent =
-            "Edit Room";
-    }
-
-    openModal();
-
-}
-
-
-/* =========================================================
-   12. UPDATE ROOM
-   ========================================================= */
-
-function updateRoom(event) {
-
-    if (event) {
-        event.preventDefault();
-    }
-
-    if (!currentEditingId) {
-
-        addRoom(event);
-
-        return;
-
-    }
-
-    const room =
-        rooms.find(
-            item =>
-                item.id === currentEditingId
-        );
-
-    if (!room) return;
-
-    const capacity =
-        Number(getInputValue("roomCapacity"));
-
-    const occupied =
-        Number(getInputValue("occupiedBeds"));
-
-    if (occupied > capacity) {
-
-        showToast(
-            "Occupied beds cannot exceed capacity.",
-            "error"
-        );
-
-        return;
-
-    }
-
-    room.roomNumber =
-        getInputValue("roomNumber");
-
-    room.hostel =
-        getInputValue("hostelName");
-
-    room.type =
-        getInputValue("roomType");
-
-    room.rent =
-        Number(getInputValue("roomRent"));
-
-    room.capacity =
-        capacity;
-
-    room.occupied =
-        occupied;
-
-    room.amenities =
-        getInputValue("roomAmenities")
-            .split(",")
-            .map(item => item.trim())
-            .filter(Boolean);
-
-    room.status =
-        occupied >= capacity
-            ? "Occupied"
-            : "Available";
-
-    saveRooms();
-
-    renderRooms();
-
-    updateDashboard();
-
-    closeModal();
-
-    resetRoomForm();
-
-    currentEditingId = null;
-
-    showToast(
-        "Room updated successfully! ✨",
-        "success"
-    );
-
-}
-
-
-/* =========================================================
-   13. DELETE ROOM
-   ========================================================= */
-
-function deleteRoom(id) {
-
-    const room =
-        rooms.find(item => item.id === id);
-
-    if (!room) return;
-
-    const confirmed =
-        confirm(
-            `Delete room ${room.roomNumber}?`
-        );
-
-    if (!confirmed) return;
-
-    rooms =
-        rooms.filter(
-            item => item.id !== id
-        );
-
-    saveRooms();
-
-    renderRooms();
-
-    updateDashboard();
-
-    showToast(
-        "Room deleted successfully.",
-        "success"
-    );
-
-}
-
-
-/* =========================================================
-   14. SEARCH AND FILTER
-   ========================================================= */
-
-function initializeSearch() {
-
-    const searchInput =
-        document.querySelector("#roomSearch");
-
-    const statusFilter =
-        document.querySelector("#statusFilter");
-
-    const typeFilter =
-        document.querySelector("#typeFilter");
-
-    if (searchInput) {
-
-        searchInput.addEventListener(
-            "input",
-            filterRooms
-        );
-
-    }
-
-    if (statusFilter) {
-
-        statusFilter.addEventListener(
-            "change",
-            filterRooms
-        );
-
-    }
-
-    if (typeFilter) {
-
-        typeFilter.addEventListener(
-            "change",
-            filterRooms
-        );
-
-    }
-
-}
-
-
-function filterRooms() {
-
-    const search =
-        (
-            document.querySelector(
-                "#roomSearch"
-            )?.value || ""
-        )
-        .toLowerCase()
-        .trim();
-
-    const status =
-        document.querySelector(
-            "#statusFilter"
-        )?.value || "all";
-
-    const type =
-        document.querySelector(
-            "#typeFilter"
-        )?.value || "all";
-
-    const filtered =
-        rooms.filter(room => {
-
-            const matchesSearch =
-                room.roomNumber
-                    .toLowerCase()
-                    .includes(search) ||
-
-                room.hostel
-                    .toLowerCase()
-                    .includes(search) ||
-
-                room.type
-                    .toLowerCase()
-                    .includes(search);
-
-            const matchesStatus =
-                status === "all" ||
-                getRoomStatus(room)
-                    .toLowerCase() ===
-                    status.toLowerCase();
-
-            const matchesType =
-                type === "all" ||
-                room.type.toLowerCase() ===
-                    type.toLowerCase();
-
-            return (
-                matchesSearch &&
-                matchesStatus &&
-                matchesType
-            );
-
-        });
-
-    renderRooms(filtered);
-
-}
-
-
-/* =========================================================
-   15. DASHBOARD STATISTICS
-   ========================================================= */
-
-function updateDashboard() {
-
-    const totalRooms =
-        rooms.length;
-
-    const totalBeds =
-        rooms.reduce(
-            (sum, room) =>
-                sum + Number(room.capacity),
-            0
-        );
-
-    const occupiedBeds =
-        rooms.reduce(
-            (sum, room) =>
-                sum + Number(room.occupied),
-            0
-        );
-
-    const availableBeds =
-        totalBeds - occupiedBeds;
-
-    const occupancy =
-        totalBeds > 0
-            ? Math.round(
-                (occupiedBeds / totalBeds) * 100
-            )
-            : 0;
-
-    const monthlyRevenue =
-        rooms.reduce(
-            (sum, room) =>
-                sum +
-                (
-                    Number(room.rent) *
-                    Number(room.occupied)
-                ),
-            0
-        );
-
-    updateNumber(
-        "#totalRooms",
-        totalRooms
-    );
-
-    updateNumber(
-        "#totalBeds",
-        totalBeds
-    );
-
-    updateNumber(
-        "#occupiedBeds",
-        occupiedBeds
-    );
-
-    updateNumber(
-        "#availableBeds",
-        availableBeds
-    );
-
-    updateNumber(
-        "#occupancyRate",
-        occupancy,
-        "%"
-    );
-
-    updateNumber(
-        "#monthlyRevenue",
-        monthlyRevenue,
-        "₹"
-    );
-
-}
-
-
-/* =========================================================
-   16. ANIMATED COUNTERS
-   ========================================================= */
-
-function initializeCounters() {
-
-    document
-        .querySelectorAll("[data-counter]")
-        .forEach(counter => {
-
-            const target =
-                Number(
-                    counter.dataset.counter
-                );
-
-            animateCounter(
-                counter,
-                target
-            );
-
-        });
-
-}
-
-
-function updateNumber(
-    selector,
-    value,
-    prefix = "",
-    suffix = ""
-) {
-
-    const element =
-        document.querySelector(selector);
-
-    if (!element) return;
-
-    animateCounter(
-        element,
-        value,
-        prefix,
-        suffix
-    );
-
-}
-
-
-function animateCounter(
-    element,
-    target,
-    prefix = "",
-    suffix = ""
-) {
-
-    if (!element) return;
-
-    const duration = 700;
-
-    const startTime =
-        performance.now();
-
-    const startValue = 0;
-
-    function update(currentTime) {
-
-        const progress =
-            Math.min(
-                (currentTime - startTime) /
-                duration,
-                1
-            );
-
-        const eased =
-            1 -
-            Math.pow(
-                1 - progress,
-                3
-            );
-
-        const value =
-            Math.round(
-                startValue +
-                (
-                    target -
-                    startValue
-                ) * eased
-            );
-
-        element.textContent =
-            `${prefix}${value.toLocaleString("en-IN")}${suffix}`;
-
-        if (progress < 1) {
-
-            requestAnimationFrame(update);
+            icon.className =
+                "fa-solid fa-eye";
 
         }
 
     }
 
-    requestAnimationFrame(update);
-
 }
 
 
 /* =========================================================
-   17. MODAL SYSTEM
-   ========================================================= */
+   10. NAVIGATION
+========================================================= */
 
-function openModal() {
+function initializeNavigation() {
 
-    const modal =
-        document.querySelector("#roomModal");
+    document.querySelectorAll(
+        ".nav-item[data-section]"
+    ).forEach(button => {
 
-    if (!modal) return;
+        button.addEventListener(
+            "click",
+            () => {
 
-    modal.classList.add("active");
+                const section =
+                    button.dataset.section;
 
-    document.body.classList.add(
-        "modal-open"
-    );
-
-}
-
-
-function closeModal() {
-
-    const modal =
-        document.querySelector("#roomModal");
-
-    if (!modal) return;
-
-    modal.classList.remove("active");
-
-    document.body.classList.remove(
-        "modal-open"
-    );
-
-    currentEditingId = null;
-
-}
-
-
-function resetRoomForm() {
-
-    const form =
-        document.querySelector("#roomForm");
-
-    if (form) {
-        form.reset();
-    }
-
-    const formTitle =
-        document.querySelector("#roomModalTitle");
-
-    if (formTitle) {
-        formTitle.textContent =
-            "Add New Room";
-    }
-
-}
-
-
-/* =========================================================
-   18. FORM INITIALIZATION
-   ========================================================= */
-
-function initializeForms() {
-
-    const loginForm =
-        document.querySelector("#loginForm");
-
-    const roomForm =
-        document.querySelector("#roomForm");
-
-    if (loginForm) {
-
-        loginForm.addEventListener(
-            "submit",
-            loginUser
-        );
-
-    }
-
-    if (roomForm) {
-
-        roomForm.addEventListener(
-            "submit",
-            event => {
-
-                if (currentEditingId) {
-
-                    updateRoom(event);
-
-                } else {
-
-                    addRoom(event);
-
-                }
+                showSection(section);
 
             }
         );
 
+    });
+
+}
+
+
+function showSection(sectionId) {
+
+    document.querySelectorAll(
+        ".section"
+    ).forEach(section => {
+
+        section.classList.remove(
+            "active"
+        );
+
+    });
+
+
+    const target =
+        document.getElementById(
+            sectionId
+        );
+
+
+    if (target) {
+
+        target.classList.add(
+            "active"
+        );
+
+    }
+
+
+    document.querySelectorAll(
+        ".nav-item[data-section]"
+    ).forEach(button => {
+
+        button.classList.toggle(
+            "active",
+            button.dataset.section ===
+                sectionId
+        );
+
+    });
+
+
+    if (sectionId === "reports") {
+
+        updateReports();
+
+    }
+
+
+    if (sectionId === "dashboard") {
+
+        updateDashboard();
+
+        setTimeout(
+            initializeCharts,
+            100
+        );
+
+    }
+
+
+    closeMobileMenu();
+
+}
+
+
+window.showSection = showSection;
+
+
+/* =========================================================
+   11. MOBILE MENU
+========================================================= */
+
+function initializeMobileMenu() {
+
+    const button =
+        document.querySelector(
+            "#mobileMenu"
+        );
+
+    const sidebar =
+        document.querySelector(
+            "#sidebar"
+        );
+
+
+    if (!button || !sidebar) return;
+
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            sidebar.classList.toggle(
+                "mobile-active"
+            );
+
+        }
+    );
+
+
+    document.querySelectorAll(
+        ".nav-item"
+    ).forEach(item => {
+
+        item.addEventListener(
+            "click",
+            closeMobileMenu
+        );
+
+    });
+
+}
+
+
+function closeMobileMenu() {
+
+    const sidebar =
+        document.querySelector(
+            "#sidebar"
+        );
+
+    if (sidebar) {
+
+        sidebar.classList.remove(
+            "mobile-active"
+        );
+
     }
 
 }
 
 
 /* =========================================================
-   19. DARK / LIGHT MODE
-   ========================================================= */
+   12. THEME
+========================================================= */
 
 function initializeTheme() {
 
@@ -1288,10 +846,27 @@ function initializeTheme() {
             APP.themeKey
         );
 
+
     if (savedTheme === "dark") {
 
         document.body.classList.add(
             "dark-mode"
+        );
+
+    }
+
+
+    const toggle =
+        document.querySelector(
+            "#themeToggle"
+        );
+
+
+    if (toggle) {
+
+        toggle.addEventListener(
+            "click",
+            toggleTheme
         );
 
     }
@@ -1305,10 +880,12 @@ function toggleTheme() {
         "dark-mode"
     );
 
+
     const isDark =
         document.body.classList.contains(
             "dark-mode"
         );
+
 
     localStorage.setItem(
         APP.themeKey,
@@ -1316,6 +893,7 @@ function toggleTheme() {
             ? "dark"
             : "light"
     );
+
 
     showToast(
         isDark
@@ -1328,8 +906,3869 @@ function toggleTheme() {
 
 
 /* =========================================================
-   20. TOAST NOTIFICATIONS
-   ========================================================= */
+   13. ROOM RENDERING
+========================================================= */
+
+function renderRooms(list = rooms) {
+
+    const container =
+        document.querySelector(
+            "#roomGrid"
+        );
+
+
+    if (!container) return;
+
+
+    if (!list.length) {
+
+        container.innerHTML = `
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    🏠
+                </div>
+
+                <h3>
+                    No rooms found
+                </h3>
+
+                <p>
+                    Try changing your filters.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        list.map(room => {
+
+            const available =
+                room.occupied <
+                room.capacity;
+
+            const percentage =
+                room.capacity
+                    ? Math.round(
+                        (
+                            room.occupied /
+                            room.capacity
+                        ) * 100
+                    )
+                    : 0;
+
+
+            return `
+
+                <article
+                    class="room-card reveal"
+                    data-room-id="${room.id}"
+                >
+
+                    <div class="room-card-top">
+
+                        <div>
+
+                            <span class="room-label">
+                                ROOM
+                            </span>
+
+                            <h3>
+                                ${escapeHTML(
+                                    room.roomNumber
+                                )}
+                            </h3>
+
+                        </div>
+
+
+                        <span
+                            class="status-badge ${
+                                available
+                                    ? "available"
+                                    : "occupied"
+                            }"
+                        >
+                            ${
+                                available
+                                    ? "Available"
+                                    : "Occupied"
+                            }
+                        </span>
+
+                    </div>
+
+
+                    <div class="room-hostel">
+
+                        🏢
+
+                        <span>
+                            ${escapeHTML(
+                                room.hostel
+                            )}
+                        </span>
+
+                    </div>
+
+
+                    <div class="room-info">
+
+                        <div>
+
+                            <span>
+                                Type
+                            </span>
+
+                            <strong>
+                                ${escapeHTML(
+                                    room.type
+                                )}
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Capacity
+                            </span>
+
+                            <strong>
+                                ${room.capacity}
+                                Bed${
+                                    room.capacity > 1
+                                        ? "s"
+                                        : ""
+                                }
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Rent
+                            </span>
+
+                            <strong>
+                                ₹${Number(
+                                    room.rent
+                                ).toLocaleString("en-IN")}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="occupancy">
+
+                        <div class="occupancy-header">
+
+                            <span>
+                                Occupancy
+                            </span>
+
+                            <strong>
+                                ${room.occupied}/${room.capacity}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="progress-bar">
+
+                            <div
+                                class="progress-fill"
+                                style="
+                                    width:${percentage}%;
+                                "
+                            ></div>
+
+                        </div>
+
+
+                        <small>
+
+                            ${
+                                available
+                                    ? `${
+                                        room.capacity -
+                                        room.occupied
+                                    } bed${
+                                        room.capacity -
+                                        room.occupied > 1
+                                            ? "s"
+                                            : ""
+                                    } available`
+                                    : "Fully occupied"
+                            }
+
+                        </small>
+
+                    </div>
+
+
+                    <div class="amenities">
+
+                        ${room.amenities
+                            .map(
+                                item =>
+                                    `<span>
+                                        ${escapeHTML(item)}
+                                    </span>`
+                            )
+                            .join("")}
+
+                    </div>
+
+
+                    <div class="room-actions">
+
+                        <button
+                            class="btn btn-secondary"
+                            onclick="editRoom(${room.id})"
+                        >
+                            ✏️ Edit
+                        </button>
+
+
+                        <button
+                            class="btn btn-danger"
+                            onclick="deleteRoom(${room.id})"
+                        >
+                            🗑️ Delete
+                        </button>
+
+                    </div>
+
+                </article>
+
+            `;
+
+        }).join("");
+
+
+    updateResultCount(
+        list.length
+    );
+
+}
+
+
+/* =========================================================
+   14. ROOM SEARCH / FILTER
+========================================================= */
+
+function initializeSearch() {
+
+    const search =
+        document.querySelector(
+            "#roomSearch"
+        );
+
+    const roomFilter =
+        document.querySelector(
+            "#roomFilter"
+        );
+
+    const typeFilter =
+        document.querySelector(
+            "#roomTypeFilter"
+        );
+
+    const priceFilter =
+        document.querySelector(
+            "#priceFilter"
+        );
+
+    const availabilityFilter =
+        document.querySelector(
+            "#availabilityFilter"
+        );
+
+    const sortFilter =
+        document.querySelector(
+            "#sortFilter"
+        );
+
+
+    [
+        search,
+        roomFilter,
+        typeFilter,
+        priceFilter,
+        availabilityFilter,
+        sortFilter
+    ].forEach(element => {
+
+        if (!element) return;
+
+        element.addEventListener(
+            element.tagName === "INPUT"
+                ? "input"
+                : "change",
+            filterRooms
+        );
+
+    });
+
+}
+
+
+function filterRooms() {
+
+    const search =
+        document.querySelector(
+            "#roomSearch"
+        )?.value
+            .toLowerCase()
+            .trim() || "";
+
+
+    const status =
+        document.querySelector(
+            "#roomFilter"
+        )?.value || "all";
+
+
+    const type =
+        document.querySelector(
+            "#roomTypeFilter"
+        )?.value || "all";
+
+
+    const price =
+        document.querySelector(
+            "#priceFilter"
+        )?.value || "all";
+
+
+    const availability =
+        document.querySelector(
+            "#availabilityFilter"
+        )?.value || "all";
+
+
+    const sort =
+        document.querySelector(
+            "#sortFilter"
+        )?.value || "default";
+
+
+    let filtered =
+        rooms.filter(room => {
+
+            const text =
+                `${room.roomNumber}
+                 ${room.hostel}
+                 ${room.type}`
+                    .toLowerCase();
+
+
+            const matchesSearch =
+                !search ||
+                text.includes(search);
+
+
+            const isAvailable =
+                room.occupied <
+                room.capacity;
+
+
+            const matchesStatus =
+                status === "all" ||
+                (
+                    status === "available" &&
+                    isAvailable
+                ) ||
+                (
+                    status === "occupied" &&
+                    !isAvailable
+                );
+
+
+            const matchesType =
+                type === "all" ||
+                room.type === type;
+
+
+            let matchesPrice = true;
+
+
+            if (price === "under5000") {
+
+                matchesPrice =
+                    room.rent < 5000;
+
+            }
+
+
+            if (price === "5000-8000") {
+
+                matchesPrice =
+                    room.rent >= 5000 &&
+                    room.rent <= 8000;
+
+            }
+
+
+            if (price === "above8000") {
+
+                matchesPrice =
+                    room.rent > 8000;
+
+            }
+
+
+            const matchesAvailability =
+                availability === "all" ||
+                (
+                    availability === "available" &&
+                    isAvailable
+                ) ||
+                (
+                    availability === "occupied" &&
+                    !isAvailable
+                );
+
+
+            return (
+                matchesSearch &&
+                matchesStatus &&
+                matchesType &&
+                matchesPrice &&
+                matchesAvailability
+            );
+
+        });
+
+
+    if (sort === "low") {
+
+        filtered.sort(
+            (a, b) =>
+                a.rent - b.rent
+        );
+
+    }
+
+
+    if (sort === "high") {
+
+        filtered.sort(
+            (a, b) =>
+                b.rent - a.rent
+        );
+
+    }
+
+
+    if (sort === "name") {
+
+        filtered.sort(
+            (a, b) =>
+                a.roomNumber.localeCompare(
+                    b.roomNumber
+                )
+        );
+
+    }
+
+
+    if (sort === "rating") {
+
+        filtered.sort(
+            (a, b) =>
+                b.rent - a.rent
+        );
+
+    }
+
+
+    renderRooms(filtered);
+
+}
+
+
+function updateResultCount(count) {
+
+    const element =
+        document.querySelector(
+            "#roomCount"
+        );
+
+
+    if (element) {
+
+        element.textContent =
+            `${count} room${
+                count !== 1
+                    ? "s"
+                    : ""
+            } found`;
+
+    }
+
+}
+
+
+function resetFilters() {
+
+    [
+        "#roomSearch",
+        "#roomFilter",
+        "#roomTypeFilter",
+        "#priceFilter",
+        "#availabilityFilter",
+        "#sortFilter"
+    ].forEach(selector => {
+
+        const element =
+            document.querySelector(
+                selector
+            );
+
+        if (!element) return;
+
+
+        if (
+            element.tagName ===
+            "SELECT"
+        ) {
+
+            element.value =
+                "all";
+
+        } else {
+
+            element.value = "";
+
+        }
+
+    });
+
+
+    const sort =
+        document.querySelector(
+            "#sortFilter"
+        );
+
+    if (sort) {
+
+        sort.value =
+            "default";
+
+    }
+
+
+    renderRooms();
+
+}
+
+
+window.resetFilters =
+    resetFilters;
+
+
+/* =========================================================
+   15. ROOM MODAL
+========================================================= */
+
+function openRoomModal() {
+
+    currentEditingId = null;
+
+    const title =
+        document.querySelector(
+            "#roomModalTitle"
+        );
+
+    if (title) {
+
+        title.textContent =
+            "Add New Room";
+
+    }
+
+
+    openGenericModal(
+        getRoomFormHTML()
+    );
+
+}
+
+
+window.openRoomModal =
+    openRoomModal;
+
+
+function getRoomFormHTML() {
+
+    return `
+
+        <div class="modal-header">
+
+            <div class="modal-icon">
+                <i class="fa-solid fa-bed"></i>
+            </div>
+
+            <div>
+
+                <h2 id="roomModalTitle">
+                    ${
+                        currentEditingId
+                            ? "Edit Room"
+                            : "Add New Room"
+                    }
+                </h2>
+
+                <p>
+                    Enter room information below.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <form
+            id="roomForm"
+            class="modal-form"
+        >
+
+            <div class="form-grid">
+
+                <div class="input-group">
+
+                    <label>
+                        Room Number
+                    </label>
+
+                    <input
+                        type="text"
+                        id="roomNumber"
+                        placeholder="Example: A-101"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label>
+                        Hostel Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="hostelName"
+                        placeholder="Example: Sunrise Hostel"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label>
+                        Room Type
+                    </label>
+
+                    <select
+                        id="roomType"
+                        required
+                    >
+
+                        <option value="">
+                            Select Type
+                        </option>
+
+                        <option value="Single">
+                            Single
+                        </option>
+
+                        <option value="Double">
+                            Double
+                        </option>
+
+                        <option value="Triple">
+                            Triple
+                        </option>
+
+                        <option value="Shared">
+                            Shared
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label>
+                        Monthly Rent
+                    </label>
+
+                    <input
+                        type="number"
+                        id="roomRent"
+                        placeholder="6500"
+                        min="0"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label>
+                        Bed Capacity
+                    </label>
+
+                    <input
+                        type="number"
+                        id="roomCapacity"
+                        placeholder="2"
+                        min="1"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label>
+                        Occupied Beds
+                    </label>
+
+                    <input
+                        type="number"
+                        id="occupiedBeds"
+                        placeholder="0"
+                        min="0"
+                        value="0"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    Amenities
+                </label>
+
+                <input
+                    type="text"
+                    id="roomAmenities"
+                    placeholder="WiFi, AC, Laundry"
+                >
+
+                <small>
+                    Separate amenities using commas.
+                </small>
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="primary-btn full-width"
+            >
+
+                <i class="fa-solid fa-check"></i>
+
+                Save Room
+
+            </button>
+
+        </form>
+
+    `;
+
+}
+
+
+function openGenericModal(content) {
+
+    const overlay =
+        document.querySelector(
+            "#modalOverlay"
+        );
+
+    const modalContent =
+        document.querySelector(
+            "#modalContent"
+        );
+
+
+    if (!overlay || !modalContent)
+        return;
+
+
+    modalContent.innerHTML =
+        content;
+
+
+    overlay.classList.add(
+        "active"
+    );
+
+
+    document.body.classList.add(
+        "modal-open"
+    );
+
+
+    const form =
+        document.querySelector(
+            "#roomForm"
+        );
+
+
+    if (form) {
+
+        form.addEventListener(
+            "submit",
+            saveRoom
+        );
+
+    }
+
+}
+
+
+function closeModal() {
+
+    const overlay =
+        document.querySelector(
+            "#modalOverlay"
+        );
+
+
+    if (overlay) {
+
+        overlay.classList.remove(
+            "active"
+        );
+
+    }
+
+
+    document.body.classList.remove(
+        "modal-open"
+    );
+
+
+    currentEditingId = null;
+
+}
+
+
+window.closeModal =
+    closeModal;
+
+
+/* =========================================================
+   16. SAVE ROOM
+========================================================= */
+
+function saveRoom(event) {
+
+    event.preventDefault();
+
+
+    const roomNumber =
+        document.querySelector(
+            "#roomNumber"
+        )?.value.trim();
+
+
+    const hostel =
+        document.querySelector(
+            "#hostelName"
+        )?.value.trim();
+
+
+    const type =
+        document.querySelector(
+            "#roomType"
+        )?.value;
+
+
+    const rent =
+        Number(
+            document.querySelector(
+                "#roomRent"
+            )?.value
+        );
+
+
+    const capacity =
+        Number(
+            document.querySelector(
+                "#roomCapacity"
+            )?.value
+        );
+
+
+    const occupied =
+        Number(
+            document.querySelector(
+                "#occupiedBeds"
+            )?.value
+        ) || 0;
+
+
+    const amenitiesText =
+        document.querySelector(
+            "#roomAmenities"
+        )?.value || "";
+
+
+    if (
+        !roomNumber ||
+        !hostel ||
+        !type ||
+        !rent ||
+        !capacity
+    ) {
+
+        showToast(
+            "Please fill all required fields.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if (occupied > capacity) {
+
+        showToast(
+            "Occupied beds cannot exceed capacity.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const amenities =
+        amenitiesText
+            .split(",")
+            .map(item =>
+                item.trim()
+            )
+            .filter(Boolean);
+
+
+    if (currentEditingId) {
+
+        const room =
+            rooms.find(
+                item =>
+                    item.id ===
+                    currentEditingId
+            );
+
+
+        if (room) {
+
+            room.roomNumber =
+                roomNumber;
+
+            room.hostel =
+                hostel;
+
+            room.type =
+                type;
+
+            room.rent =
+                rent;
+
+            room.capacity =
+                capacity;
+
+            room.occupied =
+                occupied;
+
+            room.amenities =
+                amenities;
+
+        }
+
+
+        showToast(
+            "Room updated successfully! ✨",
+            "success"
+        );
+
+    } else {
+
+        rooms.push({
+
+            id: Date.now(),
+
+            roomNumber,
+
+            hostel,
+
+            type,
+
+            rent,
+
+            capacity,
+
+            occupied,
+
+            amenities,
+
+            status:
+                occupied >= capacity
+                    ? "Occupied"
+                    : "Available"
+
+        });
+
+
+        showToast(
+            "New room added successfully! 🏠",
+            "success"
+        );
+
+    }
+
+
+    saveStorage(
+        APP.roomsKey,
+        rooms
+    );
+
+
+    closeModal();
+
+    renderRooms();
+
+    updateDashboard();
+
+    updateReports();
+
+}
+
+
+function editRoom(id) {
+
+    const room =
+        rooms.find(
+            item =>
+                item.id === id
+        );
+
+
+    if (!room) return;
+
+
+    currentEditingId =
+        id;
+
+
+    openGenericModal(
+        getRoomFormHTML()
+    );
+
+
+    setTimeout(() => {
+
+        setValue(
+            "#roomNumber",
+            room.roomNumber
+        );
+
+        setValue(
+            "#hostelName",
+            room.hostel
+        );
+
+        setValue(
+            "#roomType",
+            room.type
+        );
+
+        setValue(
+            "#roomRent",
+            room.rent
+        );
+
+        setValue(
+            "#roomCapacity",
+            room.capacity
+        );
+
+        setValue(
+            "#occupiedBeds",
+            room.occupied
+        );
+
+        setValue(
+            "#roomAmenities",
+            room.amenities.join(", ")
+        );
+
+    }, 20);
+
+}
+
+
+window.editRoom =
+    editRoom;
+
+
+/* =========================================================
+   17. DELETE ROOM
+========================================================= */
+
+function deleteRoom(id) {
+
+    const room =
+        rooms.find(
+            item =>
+                item.id === id
+        );
+
+
+    if (!room) return;
+
+
+    const confirmed =
+        confirm(
+            `Delete room ${room.roomNumber}?`
+        );
+
+
+    if (!confirmed)
+        return;
+
+
+    rooms =
+        rooms.filter(
+            item =>
+                item.id !== id
+        );
+
+
+    saveStorage(
+        APP.roomsKey,
+        rooms
+    );
+
+
+    renderRooms();
+
+    updateDashboard();
+
+    updateReports();
+
+
+    showToast(
+        "Room deleted successfully.",
+        "success"
+    );
+
+}
+
+
+window.deleteRoom =
+    deleteRoom;
+
+
+/* =========================================================
+   18. DASHBOARD
+========================================================= */
+
+function updateDashboard() {
+
+    const totalRooms =
+        rooms.length;
+
+
+    const totalBeds =
+        rooms.reduce(
+            (sum, room) =>
+                sum +
+                Number(room.capacity),
+            0
+        );
+
+
+    const occupiedBeds =
+        rooms.reduce(
+            (sum, room) =>
+                sum +
+                Number(room.occupied),
+            0
+        );
+
+
+    const availableBeds =
+        totalBeds -
+        occupiedBeds;
+
+
+    const occupancy =
+        totalBeds
+            ? Math.round(
+                (
+                    occupiedBeds /
+                    totalBeds
+                ) * 100
+            )
+            : 0;
+
+
+    const monthlyRevenue =
+        rooms.reduce(
+            (sum, room) =>
+                sum +
+                (
+                    Number(room.rent) *
+                    Number(room.occupied)
+                ),
+            0
+        );
+
+
+    const pendingPayments =
+        payments.filter(
+            payment =>
+                payment.status ===
+                "Pending"
+        ).length;
+
+
+    animateValue(
+        "#totalRooms",
+        totalRooms
+    );
+
+
+    animateValue(
+        "#totalTenants",
+        tenants.length
+    );
+
+
+    animateCurrency(
+        "#monthlyRevenue",
+        monthlyRevenue
+    );
+
+
+    animateValue(
+        "#pendingPayments",
+        pendingPayments
+    );
+
+
+    animateText(
+        "#occupancyPercent",
+        `${occupancy}%`
+    );
+
+
+    animateText(
+        "#occupancyRate",
+        `${occupancy}%`
+    );
+
+
+    animateValue(
+        "#occupiedRooms",
+        occupiedBeds
+    );
+
+
+    animateValue(
+        "#availableRooms",
+        availableBeds
+    );
+
+
+    animateValue(
+        "#totalBookings",
+        bookings.length
+    );
+
+
+    animateText(
+        "#reportOccupancy",
+        `${occupancy}%`
+    );
+
+
+    const progress =
+        document.querySelector(
+            "#occupancyProgress"
+        );
+
+
+    if (progress) {
+
+        progress.style.width =
+            `${occupancy}%`;
+
+    }
+
+}
+
+
+/* =========================================================
+   19. ANIMATED VALUES
+========================================================= */
+
+function animateValue(
+    selector,
+    target
+) {
+
+    const element =
+        document.querySelector(
+            selector
+        );
+
+
+    if (!element) return;
+
+
+    const start =
+        Number(
+            element.dataset.value ||
+            0
+        );
+
+
+    const duration =
+        600;
+
+
+    const startTime =
+        performance.now();
+
+
+    function update(time) {
+
+        const progress =
+            Math.min(
+                (
+                    time -
+                    startTime
+                ) / duration,
+                1
+            );
+
+
+        const eased =
+            1 -
+            Math.pow(
+                1 - progress,
+                3
+            );
+
+
+        const value =
+            Math.round(
+                start +
+                (
+                    target -
+                    start
+                ) * eased
+            );
+
+
+        element.textContent =
+            value.toLocaleString(
+                "en-IN"
+            );
+
+
+        if (progress < 1) {
+
+            requestAnimationFrame(
+                update
+            );
+
+        } else {
+
+            element.dataset.value =
+                target;
+
+        }
+
+    }
+
+
+    requestAnimationFrame(
+        update
+    );
+
+}
+
+
+function animateCurrency(
+    selector,
+    target
+) {
+
+    const element =
+        document.querySelector(
+            selector
+        );
+
+
+    if (!element) return;
+
+
+    element.textContent =
+        `₹${Number(
+            target
+        ).toLocaleString("en-IN")}`;
+
+}
+
+
+function animateText(
+    selector,
+    value
+) {
+
+    const element =
+        document.querySelector(
+            selector
+        );
+
+
+    if (element) {
+
+        element.textContent =
+            value;
+
+    }
+
+}
+
+
+/* =========================================================
+   20. CHART
+========================================================= */
+
+function initializeCharts() {
+
+    const canvas =
+        document.querySelector(
+            "#revenueChart"
+        );
+
+
+    if (!canvas)
+        return;
+
+
+    if (typeof Chart ===
+        "undefined")
+        return;
+
+
+    if (revenueChart) {
+
+        revenueChart.destroy();
+
+    }
+
+
+    const months = [
+
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct"
+
+    ];
+
+
+    const revenue = [
+
+        52000,
+        61000,
+        68000,
+        74000,
+        82000,
+        calculateMonthlyRevenue()
+
+    ];
+
+
+    revenueChart =
+        new Chart(
+            canvas,
+            {
+
+                type: "line",
+
+                data: {
+
+                    labels: months,
+
+                    datasets: [
+
+                        {
+
+                            label:
+                                "Revenue",
+
+                            data:
+                                revenue,
+
+                            tension:
+                                0.4,
+
+                            fill:
+                                true
+
+                        }
+
+                    ]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio:
+                        false,
+
+                    plugins: {
+
+                        legend: {
+
+                            display:
+                                false
+
+                        }
+
+                    },
+
+                    scales: {
+
+                        y: {
+
+                            beginAtZero:
+                                true,
+
+                            ticks: {
+
+                                callback:
+                                    value =>
+                                        "₹" +
+                                        Number(
+                                            value
+                                        ).toLocaleString(
+                                            "en-IN"
+                                        )
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+}
+
+
+function calculateMonthlyRevenue() {
+
+    return rooms.reduce(
+        (sum, room) =>
+            sum +
+            (
+                Number(room.rent) *
+                Number(room.occupied)
+            ),
+        0
+    );
+
+}
+
+
+/* =========================================================
+   21. TENANTS
+========================================================= */
+
+function renderTenants() {
+
+    const table =
+        document.querySelector(
+            "#tenantTable"
+        );
+
+
+    if (!table) return;
+
+
+    if (!tenants.length) {
+
+        table.innerHTML = `
+
+            <tr>
+
+                <td colspan="7">
+                    No tenants found.
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    table.innerHTML =
+        tenants.map(
+            tenant => `
+
+                <tr>
+
+                    <td>
+
+                        <strong>
+                            ${escapeHTML(
+                                tenant.name
+                            )}
+                        </strong>
+
+                    </td>
+
+
+                    <td>
+                        ${escapeHTML(
+                            tenant.room
+                        )}
+                    </td>
+
+
+                    <td>
+                        ${escapeHTML(
+                            tenant.phone
+                        )}
+                    </td>
+
+
+                    <td>
+                        ${formatDate(
+                            tenant.joinDate
+                        )}
+                    </td>
+
+
+                    <td>
+                        ₹${Number(
+                            tenant.rent
+                        ).toLocaleString(
+                            "en-IN"
+                        )}
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="status-badge ${
+                                tenant.payment ===
+                                "Paid"
+                                    ? "available"
+                                    : "occupied"
+                            }"
+                        >
+
+                            ${tenant.payment}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <button
+                            class="icon-btn"
+                            onclick="deleteTenant(${tenant.id})"
+                        >
+
+                            <i class="fa-solid fa-trash"></i>
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+            `
+        ).join("");
+
+}
+
+
+function openTenantModal() {
+
+    openGenericModal(`
+
+        <div class="modal-header">
+
+            <div class="modal-icon">
+
+                <i class="fa-solid fa-user-plus"></i>
+
+            </div>
+
+            <div>
+
+                <h2>
+                    Add Tenant
+                </h2>
+
+                <p>
+                    Register a new hostel resident.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <form id="tenantForm">
+
+            <div class="form-grid">
+
+                <div class="input-group">
+
+                    <label>
+                        Full Name
+                    </label>
+
+                    <input
+                        id="tenantName"
+                        required
+                        placeholder="Enter full name"
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label>
+                        Phone
+                    </label>
+
+                    <input
+                        id="tenantPhone"
+                        required
+                        placeholder="9876543210"
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label>
+                        Room
+                    </label>
+
+                    <select
+                        id="tenantRoom"
+                        required
+                    >
+
+                        <option value="">
+                            Select Room
+                        </option>
+
+                        ${rooms
+                            .map(
+                                room =>
+                                    `<option value="${room.roomNumber}">
+                                        ${room.roomNumber}
+                                    </option>`
+                            )
+                            .join("")}
+
+                    </select>
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label>
+                        Monthly Rent
+                    </label>
+
+                    <input
+                        type="number"
+                        id="tenantRent"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <button
+                class="primary-btn full-width"
+                type="submit"
+            >
+
+                Add Tenant
+
+            </button>
+
+        </form>
+
+    `);
+
+
+    const form =
+        document.querySelector(
+            "#tenantForm"
+        );
+
+
+    if (form) {
+
+        form.addEventListener(
+            "submit",
+            event => {
+
+                event.preventDefault();
+
+
+                const tenant = {
+
+                    id: Date.now(),
+
+                    name:
+                        getValue(
+                            "#tenantName"
+                        ),
+
+                    phone:
+                        getValue(
+                            "#tenantPhone"
+                        ),
+
+                    room:
+                        getValue(
+                            "#tenantRoom"
+                        ),
+
+                    rent:
+                        Number(
+                            getValue(
+                                "#tenantRent"
+                            )
+                        ),
+
+                    joinDate:
+                        new Date()
+                            .toISOString()
+                            .split("T")[0],
+
+                    payment:
+                        "Pending"
+
+                };
+
+
+                tenants.push(
+                    tenant
+                );
+
+
+                saveStorage(
+                    APP.tenantsKey,
+                    tenants
+                );
+
+
+                closeModal();
+
+                renderTenants();
+
+                updateDashboard();
+
+                updateActivity();
+
+
+                showToast(
+                    "Tenant added successfully! 👤",
+                    "success"
+                );
+
+            }
+        );
+
+    }
+
+}
+
+
+window.openTenantModal =
+    openTenantModal;
+
+
+function deleteTenant(id) {
+
+    if (
+        !confirm(
+            "Delete this tenant?"
+        )
+    )
+        return;
+
+
+    tenants =
+        tenants.filter(
+            tenant =>
+                tenant.id !== id
+        );
+
+
+    saveStorage(
+        APP.tenantsKey,
+        tenants
+    );
+
+
+    renderTenants();
+
+    updateDashboard();
+
+
+    showToast(
+        "Tenant removed.",
+        "success"
+    );
+
+}
+
+
+window.deleteTenant =
+    deleteTenant;
+
+
+/* =========================================================
+   22. PAYMENTS
+========================================================= */
+
+function renderPayments() {
+
+    const table =
+        document.querySelector(
+            "#paymentTable"
+        );
+
+
+    if (!table) return;
+
+
+    table.innerHTML =
+        payments.map(
+            payment => `
+
+                <tr>
+
+                    <td>
+
+                        <strong>
+                            ${escapeHTML(
+                                payment.tenant
+                            )}
+                        </strong>
+
+                    </td>
+
+
+                    <td>
+                        ₹${Number(
+                            payment.amount
+                        ).toLocaleString(
+                            "en-IN"
+                        )}
+                    </td>
+
+
+                    <td>
+                        ${formatDate(
+                            payment.date
+                        )}
+                    </td>
+
+
+                    <td>
+                        ${escapeHTML(
+                            payment.method
+                        )}
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="status-badge ${
+                                payment.status ===
+                                "Paid"
+                                    ? "available"
+                                    : "occupied"
+                            }"
+                        >
+
+                            ${payment.status}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        ${
+                            payment.status ===
+                            "Pending"
+
+                                ? `
+
+                                    <button
+                                        class="btn btn-secondary"
+                                        onclick="markPaymentPaid(${payment.id})"
+                                    >
+                                        Mark Paid
+                                    </button>
+
+                                  `
+
+                                : "✓"
+
+                        }
+
+                    </td>
+
+                </tr>
+
+            `
+        ).join("");
+
+
+    updatePaymentStatistics();
+
+}
+
+
+function updatePaymentStatistics() {
+
+    const collected =
+        payments
+            .filter(
+                p =>
+                    p.status ===
+                    "Paid"
+            )
+            .reduce(
+                (sum, p) =>
+                    sum +
+                    Number(p.amount),
+                0
+            );
+
+
+    const pending =
+        payments
+            .filter(
+                p =>
+                    p.status ===
+                    "Pending"
+            )
+            .reduce(
+                (sum, p) =>
+                    sum +
+                    Number(p.amount),
+                0
+            );
+
+
+    animateCurrency(
+        "#totalCollected",
+        collected
+    );
+
+
+    animateCurrency(
+        "#pendingAmount",
+        pending
+    );
+
+}
+
+
+function markPaymentPaid(id) {
+
+    const payment =
+        payments.find(
+            p =>
+                p.id === id
+        );
+
+
+    if (!payment)
+        return;
+
+
+    payment.status =
+        "Paid";
+
+
+    saveStorage(
+        APP.paymentsKey,
+        payments
+    );
+
+
+    renderPayments();
+
+    updateDashboard();
+
+    updateActivity();
+
+
+    showToast(
+        "Payment marked as paid. 💰",
+        "success"
+    );
+
+}
+
+
+window.markPaymentPaid =
+    markPaymentPaid;
+
+
+/* =========================================================
+   23. MAINTENANCE
+========================================================= */
+
+function renderMaintenance() {
+
+    const container =
+        document.querySelector(
+            "#maintenanceGrid"
+        );
+
+
+    if (!container)
+        return;
+
+
+    container.innerHTML =
+        maintenanceRequests.map(
+            request => `
+
+                <div class="maintenance-card">
+
+                    <div>
+
+                        <span class="status-badge">
+
+                            ${escapeHTML(
+                                request.status
+                            )}
+
+                        </span>
+
+                        <h3>
+                            ${escapeHTML(
+                                request.title
+                            )}
+                        </h3>
+
+                        <p>
+                            Room:
+                            ${escapeHTML(
+                                request.room
+                            )}
+                        </p>
+
+                        <small>
+                            ${formatDate(
+                                request.date
+                            )}
+                        </small>
+
+                    </div>
+
+
+                    <strong>
+
+                        ${escapeHTML(
+                            request.priority
+                        )}
+
+                    </strong>
+
+                </div>
+
+            `
+        ).join("");
+
+
+    const badge =
+        document.querySelector(
+            "#maintenanceBadge"
+        );
+
+
+    if (badge) {
+
+        badge.textContent =
+            maintenanceRequests.filter(
+                item =>
+                    item.status !==
+                    "Resolved"
+            ).length;
+
+    }
+
+}
+
+
+function openComplaintModal() {
+
+    openGenericModal(`
+
+        <div class="modal-header">
+
+            <div class="modal-icon">
+
+                🔧
+
+            </div>
+
+            <div>
+
+                <h2>
+                    New Maintenance Request
+                </h2>
+
+                <p>
+                    Report a room or facility issue.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <form id="complaintForm">
+
+            <div class="input-group">
+
+                <label>
+                    Issue
+                </label>
+
+                <input
+                    id="complaintTitle"
+                    required
+                    placeholder="Example: AC not working"
+                >
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="input-group">
+
+                    <label>
+                        Room
+                    </label>
+
+                    <input
+                        id="complaintRoom"
+                        required
+                        placeholder="A-101"
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label>
+                        Priority
+                    </label>
+
+                    <select
+                        id="complaintPriority"
+                    >
+
+                        <option>
+                            Low
+                        </option>
+
+                        <option>
+                            Medium
+                        </option>
+
+                        <option>
+                            High
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <button
+                class="primary-btn full-width"
+                type="submit"
+            >
+
+                Create Request
+
+            </button>
+
+        </form>
+
+    `);
+
+
+    document
+        .querySelector(
+            "#complaintForm"
+        )
+        ?.addEventListener(
+            "submit",
+            event => {
+
+                event.preventDefault();
+
+
+                maintenanceRequests.unshift({
+
+                    id: Date.now(),
+
+                    title:
+                        getValue(
+                            "#complaintTitle"
+                        ),
+
+                    room:
+                        getValue(
+                            "#complaintRoom"
+                        ),
+
+                    priority:
+                        getValue(
+                            "#complaintPriority"
+                        ),
+
+                    status:
+                        "Open",
+
+                    date:
+                        new Date()
+                            .toISOString()
+                            .split("T")[0]
+
+                });
+
+
+                saveStorage(
+                    APP.maintenanceKey,
+                    maintenanceRequests
+                );
+
+
+                closeModal();
+
+                renderMaintenance();
+
+                updateReports();
+
+                updateActivity();
+
+
+                showToast(
+                    "Maintenance request created. 🔧",
+                    "success"
+                );
+
+            }
+        );
+
+}
+
+
+window.openComplaintModal =
+    openComplaintModal;
+
+
+/* =========================================================
+   24. NOTICES
+========================================================= */
+
+function renderNotices() {
+
+    const container =
+        document.querySelector(
+            "#noticeGrid"
+        );
+
+
+    if (!container)
+        return;
+
+
+    container.innerHTML =
+        notices.map(
+            notice => `
+
+                <div class="notice-card">
+
+                    <span class="notice-type">
+
+                        ${escapeHTML(
+                            notice.type
+                        )}
+
+                    </span>
+
+
+                    <h3>
+
+                        ${escapeHTML(
+                            notice.title
+                        )}
+
+                    </h3>
+
+
+                    <p>
+
+                        ${escapeHTML(
+                            notice.message
+                        )}
+
+                    </p>
+
+
+                    <small>
+
+                        ${formatDate(
+                            notice.date
+                        )}
+
+                    </small>
+
+                </div>
+
+            `
+        ).join("");
+
+}
+
+
+function openNoticeModal() {
+
+    openGenericModal(`
+
+        <div class="modal-header">
+
+            <div class="modal-icon">
+                📢
+            </div>
+
+            <div>
+
+                <h2>
+                    Create Notice
+                </h2>
+
+                <p>
+                    Publish an announcement for tenants.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <form id="noticeForm">
+
+            <div class="input-group">
+
+                <label>
+                    Notice Title
+                </label>
+
+                <input
+                    id="noticeTitle"
+                    required
+                    placeholder="Enter notice title"
+                >
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    Category
+                </label>
+
+                <select
+                    id="noticeType"
+                >
+
+                    <option>
+                        Important
+                    </option>
+
+                    <option>
+                        Payment
+                    </option>
+
+                    <option>
+                        Maintenance
+                    </option>
+
+                    <option>
+                        General
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    Message
+                </label>
+
+                <textarea
+                    id="noticeMessage"
+                    rows="5"
+                    required
+                    placeholder="Write your announcement..."
+                ></textarea>
+
+            </div>
+
+
+            <button
+                class="primary-btn full-width"
+                type="submit"
+            >
+
+                Publish Notice
+
+            </button>
+
+        </form>
+
+    `);
+
+
+    document
+        .querySelector(
+            "#noticeForm"
+        )
+        ?.addEventListener(
+            "submit",
+            event => {
+
+                event.preventDefault();
+
+
+                notices.unshift({
+
+                    id: Date.now(),
+
+                    title:
+                        getValue(
+                            "#noticeTitle"
+                        ),
+
+                    type:
+                        getValue(
+                            "#noticeType"
+                        ),
+
+                    message:
+                        getValue(
+                            "#noticeMessage"
+                        ),
+
+                    date:
+                        new Date()
+                            .toISOString()
+                            .split("T")[0]
+
+                });
+
+
+                saveStorage(
+                    APP.noticesKey,
+                    notices
+                );
+
+
+                closeModal();
+
+                renderNotices();
+
+                updateActivity();
+
+
+                showToast(
+                    "Notice published successfully! 📢",
+                    "success"
+                );
+
+            }
+        );
+
+}
+
+
+window.openNoticeModal =
+    openNoticeModal;
+
+
+/* =========================================================
+   25. REPORTS
+========================================================= */
+
+function updateReports() {
+
+    const totalBeds =
+        rooms.reduce(
+            (sum, room) =>
+                sum +
+                Number(room.capacity),
+            0
+        );
+
+
+    const occupied =
+        rooms.reduce(
+            (sum, room) =>
+                sum +
+                Number(room.occupied),
+            0
+        );
+
+
+    const occupancy =
+        totalBeds
+            ? Math.round(
+                (
+                    occupied /
+                    totalBeds
+                ) * 100
+            )
+            : 0;
+
+
+    const paid =
+        payments.filter(
+            p =>
+                p.status ===
+                "Paid"
+        ).length;
+
+
+    const collectionRate =
+        payments.length
+            ? Math.round(
+                (
+                    paid /
+                    payments.length
+                ) * 100
+            )
+            : 0;
+
+
+    const openComplaints =
+        maintenanceRequests.filter(
+            item =>
+                item.status !==
+                "Resolved"
+        ).length;
+
+
+    animateText(
+        "#reportOccupancy",
+        `${occupancy}%`
+    );
+
+
+    animateText(
+        "#collectionRate",
+        `${collectionRate}%`
+    );
+
+
+    animateValue(
+        "#openComplaints",
+        openComplaints
+    );
+
+
+    const occupancyProgress =
+        document.querySelector(
+            "#occupancyProgress"
+        );
+
+
+    if (occupancyProgress) {
+
+        occupancyProgress.style.width =
+            `${occupancy}%`;
+
+    }
+
+
+    const collectionProgress =
+        document.querySelector(
+            "#collectionProgress"
+        );
+
+
+    if (collectionProgress) {
+
+        collectionProgress.style.width =
+            `${collectionRate}%`;
+
+    }
+
+
+    const performance =
+        document.querySelector(
+            "#performanceList"
+        );
+
+
+    if (performance) {
+
+        performance.innerHTML = `
+
+            <div class="performance-item">
+
+                <span>
+                    Room Occupancy
+                </span>
+
+                <strong>
+                    ${occupancy}%
+                </strong>
+
+            </div>
+
+
+            <div class="performance-item">
+
+                <span>
+                    Payment Collection
+                </span>
+
+                <strong>
+                    ${collectionRate}%
+                </strong>
+
+            </div>
+
+
+            <div class="performance-item">
+
+                <span>
+                    Active Tenants
+                </span>
+
+                <strong>
+                    ${tenants.length}
+                </strong>
+
+            </div>
+
+
+            <div class="performance-item">
+
+                <span>
+                    Open Maintenance
+                </span>
+
+                <strong>
+                    ${openComplaints}
+                </strong>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+/* =========================================================
+   26. RECENT ACTIVITY
+========================================================= */
+
+function updateActivity() {
+
+    const container =
+        document.querySelector(
+            "#activityList"
+        );
+
+
+    if (!container)
+        return;
+
+
+    const activities = [];
+
+
+    tenants
+        .slice(-3)
+        .reverse()
+        .forEach(
+            tenant => {
+
+                activities.push({
+
+                    icon: "👤",
+
+                    text:
+                        `${tenant.name} registered as a tenant.`
+
+                });
+
+            }
+        );
+
+
+    payments
+        .slice(-2)
+        .reverse()
+        .forEach(
+            payment => {
+
+                activities.push({
+
+                    icon: "💰",
+
+                    text:
+                        `${payment.tenant} payment is ${payment.status}.`
+
+                });
+
+            }
+        );
+
+
+    maintenanceRequests
+        .slice(-2)
+        .reverse()
+        .forEach(
+            request => {
+
+                activities.push({
+
+                    icon: "🔧",
+
+                    text:
+                        `${request.title} - ${request.status}.`
+
+                });
+
+            }
+        );
+
+
+    if (!activities.length) {
+
+        container.innerHTML = `
+
+            <div class="empty-state">
+
+                <p>
+                    No recent activity.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        activities
+            .slice(0, 8)
+            .map(
+                item => `
+
+                    <div class="activity-item">
+
+                        <div class="activity-icon">
+                            ${item.icon}
+                        </div>
+
+                        <div>
+
+                            <p>
+                                ${escapeHTML(
+                                    item.text
+                                )}
+                            </p>
+
+                            <small>
+                                Just now
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                `
+            )
+            .join("");
+
+}
+
+
+/* =========================================================
+   27. SEARCH
+========================================================= */
+
+function initializeGlobalSearch() {
+
+    const input =
+        document.querySelector(
+            "#globalSearch"
+        );
+
+
+    if (!input) return;
+
+
+    input.addEventListener(
+        "input",
+        () => {
+
+            const value =
+                input.value
+                    .toLowerCase()
+                    .trim();
+
+
+            if (!value) return;
+
+
+            const room =
+                rooms.find(
+                    item =>
+                        item.roomNumber
+                            .toLowerCase()
+                            .includes(value) ||
+                        item.hostel
+                            .toLowerCase()
+                            .includes(value)
+                );
+
+
+            const tenant =
+                tenants.find(
+                    item =>
+                        item.name
+                            .toLowerCase()
+                            .includes(value)
+                );
+
+
+            if (room) {
+
+                showSection(
+                    "rooms"
+                );
+
+                const roomSearch =
+                    document.querySelector(
+                        "#roomSearch"
+                    );
+
+                if (roomSearch) {
+
+                    roomSearch.value =
+                        value;
+
+                    filterRooms();
+
+                }
+
+            } else if (tenant) {
+
+                showSection(
+                    "tenants"
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+function initializeSearch() {
+
+    initializeGlobalSearch();
+
+}
+
+
+/* =========================================================
+   28. BUTTONS
+========================================================= */
+
+function initializeButtons() {
+
+    const exportBtn =
+        document.querySelector(
+            "#exportBtn"
+        );
+
+
+    if (exportBtn) {
+
+        exportBtn.addEventListener(
+            "click",
+            exportData
+        );
+
+    }
+
+
+    const reportExport =
+        document.querySelector(
+            "#reportExportBtn"
+        );
+
+
+    if (reportExport) {
+
+        reportExport.addEventListener(
+            "click",
+            exportData
+        );
+
+    }
+
+
+    const modalOverlay =
+        document.querySelector(
+            "#modalOverlay"
+        );
+
+
+    if (modalOverlay) {
+
+        modalOverlay.addEventListener(
+            "click",
+            event => {
+
+                if (
+                    event.target ===
+                    modalOverlay
+                ) {
+
+                    closeModal();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    const scrollTop =
+        document.querySelector(
+            "#scrollTop"
+        );
+
+
+    if (scrollTop) {
+
+        scrollTop.addEventListener(
+            "click",
+            () => {
+
+                window.scrollTo({
+
+                    top: 0,
+
+                    behavior: "smooth"
+
+                });
+
+            }
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   29. EXPORT ALL DATA
+========================================================= */
+
+function exportData() {
+
+    const data = {
+
+        rooms,
+
+        tenants,
+
+        payments,
+
+        maintenance:
+            maintenanceRequests,
+
+        notices,
+
+        bookings,
+
+        exportedAt:
+            new Date()
+                .toISOString()
+
+    };
+
+
+    const blob =
+        new Blob(
+
+            [
+                JSON.stringify(
+                    data,
+                    null,
+                    2
+                )
+            ],
+
+            {
+                type:
+                    "application/json"
+            }
+
+        );
+
+
+    const url =
+        URL.createObjectURL(
+            blob
+        );
+
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+
+    link.href =
+        url;
+
+
+    link.download =
+        "rentease-backup.json";
+
+
+    document.body.appendChild(
+        link
+    );
+
+
+    link.click();
+
+
+    link.remove();
+
+
+    URL.revokeObjectURL(
+        url
+    );
+
+
+    showToast(
+        "RentEase data exported successfully! 📦",
+        "success"
+    );
+
+}
+
+
+/* =========================================================
+   30. BACK TO TOP
+========================================================= */
+
+function initializeBackToTop() {
+
+    const button =
+        document.querySelector(
+            "#scrollTop"
+        );
+
+
+    if (!button)
+        return;
+
+
+    window.addEventListener(
+        "scroll",
+        () => {
+
+            button.classList.toggle(
+                "show",
+                window.scrollY >
+                    400
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   31. KEYBOARD SHORTCUTS
+========================================================= */
+
+function initializeKeyboardShortcuts() {
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key ===
+                "Escape"
+            ) {
+
+                closeModal();
+
+                closeBookingModal();
+
+            }
+
+
+            if (
+                event.ctrlKey &&
+                event.key.toLowerCase() ===
+                    "k"
+            ) {
+
+                event.preventDefault();
+
+
+                const search =
+                    document.querySelector(
+                        "#globalSearch"
+                    );
+
+
+                if (search) {
+
+                    search.focus();
+
+                }
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   32. BOOKING MODAL
+========================================================= */
+
+function openBookingModal(roomId) {
+
+    const room =
+        rooms.find(
+            item =>
+                item.id === roomId
+        );
+
+
+    if (!room)
+        return;
+
+
+    if (
+        room.occupied >=
+        room.capacity
+    ) {
+
+        showToast(
+            "This room is fully occupied.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const modal =
+        document.querySelector(
+            "#bookingModal"
+        );
+
+
+    if (!modal)
+        return;
+
+
+    const roomName =
+        document.querySelector(
+            "#modalRoomName"
+        );
+
+
+    const roomPrice =
+        document.querySelector(
+            "#modalRoomPrice"
+        );
+
+
+    const bookingRoom =
+        document.querySelector(
+            "#bookingRoom"
+        );
+
+
+    if (roomName) {
+
+        roomName.textContent =
+            `${room.roomNumber} - ${room.hostel}`;
+
+    }
+
+
+    if (roomPrice) {
+
+        roomPrice.textContent =
+            `₹${Number(
+                room.rent
+            ).toLocaleString(
+                "en-IN"
+            )} / month`;
+
+    }
+
+
+    if (bookingRoom) {
+
+        bookingRoom.value =
+            room.roomNumber;
+
+        bookingRoom.dataset.roomId =
+            room.id;
+
+    }
+
+
+    modal.classList.add(
+        "active"
+    );
+
+}
+
+
+window.openBookingModal =
+    openBookingModal;
+
+
+function closeBookingModal() {
+
+    const modal =
+        document.querySelector(
+            "#bookingModal"
+        );
+
+
+    if (modal) {
+
+        modal.classList.remove(
+            "active"
+        );
+
+    }
+
+}
+
+
+window.closeBookingModal =
+    closeBookingModal;
+
+
+/* =========================================================
+   33. BOOKING FORM
+========================================================= */
+
+function initializeForms() {
+
+    const bookingForm =
+        document.querySelector(
+            "#bookingForm"
+        );
+
+
+    if (bookingForm) {
+
+        bookingForm.addEventListener(
+            "submit",
+            handleBooking
+        );
+
+    }
+
+
+    document.addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target.closest(
+                    "#bookingModal"
+                ) &&
+                event.target ===
+                    document.querySelector(
+                        "#bookingModal"
+                    )
+            ) {
+
+                closeBookingModal();
+
+            }
+
+        }
+    );
+
+}
+
+
+function handleBooking(event) {
+
+    event.preventDefault();
+
+
+    const bookingRoom =
+        document.querySelector(
+            "#bookingRoom"
+        );
+
+
+    const roomId =
+        Number(
+            bookingRoom?.dataset.roomId
+        );
+
+
+    const room =
+        rooms.find(
+            item =>
+                item.id === roomId
+        );
+
+
+    if (!room) {
+
+        showToast(
+            "Room not found.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const booking = {
+
+        id:
+            "RE" +
+            Date.now()
+                .toString()
+                .slice(-8),
+
+        roomId:
+            room.id,
+
+        room:
+            room.roomNumber,
+
+        roomName:
+            room.roomNumber,
+
+        hostel:
+            room.hostel,
+
+        name:
+            getValue(
+                "#customerName"
+            ),
+
+        email:
+            getValue(
+                "#customerEmail"
+            ),
+
+        phone:
+            getValue(
+                "#customerPhone"
+            ),
+
+        moveInDate:
+            getValue(
+                "#moveInDate"
+            ),
+
+        price:
+            room.rent,
+
+        status:
+            "Confirmed",
+
+        createdAt:
+            new Date()
+                .toISOString()
+
+    };
+
+
+    bookings.push(
+        booking
+    );
+
+
+    room.occupied =
+        Math.min(
+            room.capacity,
+            room.occupied + 1
+        );
+
+
+    room.status =
+        room.occupied >=
+        room.capacity
+            ? "Occupied"
+            : "Available";
+
+
+    saveStorage(
+        APP.bookingsKey,
+        bookings
+    );
+
+
+    saveStorage(
+        APP.roomsKey,
+        rooms
+    );
+
+
+    event.target.reset();
+
+    closeBookingModal();
+
+    renderRooms();
+
+    updateDashboard();
+
+    updateActivity();
+
+
+    showBookingSuccess(
+        booking
+    );
+
+
+    showToast(
+        `Booking confirmed! ID: ${booking.id}`,
+        "success"
+    );
+
+}
+
+
+function showBookingSuccess(
+    booking
+) {
+
+    const modal =
+        document.querySelector(
+            "#successModal"
+        );
+
+
+    if (!modal)
+        return;
+
+
+    const id =
+        document.querySelector(
+            "#successBookingId"
+        );
+
+
+    const room =
+        document.querySelector(
+            "#successRoomName"
+        );
+
+
+    if (id) {
+
+        id.textContent =
+            booking.id;
+
+    }
+
+
+    if (room) {
+
+        room.textContent =
+            booking.roomName;
+
+    }
+
+
+    modal.classList.add(
+        "active"
+    );
+
+
+    setTimeout(
+        () => {
+
+            modal.classList.remove(
+                "active"
+            );
+
+        },
+        5000
+    );
+
+}
+
+
+/* =========================================================
+   34. FAVORITES
+========================================================= */
+
+function updateFavoriteCount() {
+
+    const count =
+        Number(
+            localStorage.getItem(
+                "rentease_favorites_count"
+            )
+        ) || 0;
+
+
+    document.querySelectorAll(
+        "#favoritesCount, .favorites-count"
+    ).forEach(
+        element => {
+
+            element.textContent =
+                count;
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   35. UTILITY
+========================================================= */
+
+function getValue(selector) {
+
+    const element =
+        document.querySelector(
+            selector
+        );
+
+
+    return element
+        ? element.value.trim()
+        : "";
+
+}
+
+
+function setValue(
+    selector,
+    value
+) {
+
+    const element =
+        document.querySelector(
+            selector
+        );
+
+
+    if (element) {
+
+        element.value =
+            value;
+
+    }
+
+}
+
+
+function escapeHTML(value) {
+
+    return String(value)
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+function formatDate(date) {
+
+    if (!date)
+        return "--";
+
+
+    const parsed =
+        new Date(date);
+
+
+    if (
+        Number.isNaN(
+            parsed.getTime()
+        )
+    ) {
+
+        return date;
+
+    }
+
+
+    return parsed.toLocaleDateString(
+        "en-IN",
+        {
+
+            day: "2-digit",
+
+            month: "short",
+
+            year: "numeric"
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   36. TOAST
+========================================================= */
 
 function showToast(
     message,
@@ -1341,10 +4780,13 @@ function showToast(
             "#toastContainer"
         );
 
+
     if (!container) {
 
         container =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
         container.id =
             "toastContainer";
@@ -1358,11 +4800,16 @@ function showToast(
 
     }
 
+
     const toast =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     toast.className =
         `toast toast-${type}`;
+
 
     const icon =
         type === "success"
@@ -1370,6 +4817,7 @@ function showToast(
             : type === "error"
                 ? "!"
                 : "i";
+
 
     toast.innerHTML = `
 
@@ -1390,567 +4838,146 @@ function showToast(
 
     `;
 
-    container.appendChild(toast);
 
-    requestAnimationFrame(() => {
+    container.appendChild(
+        toast
+    );
 
-        toast.classList.add("show");
 
-    });
+    setTimeout(
+        () => {
+
+            toast.classList.add(
+                "show"
+            );
+
+        },
+        10
+    );
+
 
     toast
-        .querySelector(".toast-close")
+        .querySelector(
+            ".toast-close"
+        )
         .addEventListener(
             "click",
-            () => removeToast(toast)
+            () =>
+                removeToast(
+                    toast
+                )
         );
 
-    setTimeout(() => {
 
-        removeToast(toast);
-
-    }, 3500);
+    setTimeout(
+        () =>
+            removeToast(
+                toast
+            ),
+        3500
+    );
 
 }
 
 
 function removeToast(toast) {
 
-    if (!toast) return;
-
-    toast.classList.remove("show");
-
-    setTimeout(() => {
-
-        toast.remove();
-
-    }, 300);
-
-}
-
-
-/* =========================================================
-   21. SCROLL ANIMATIONS
-   ========================================================= */
-
-function initializeAnimations() {
-
-    observeRevealElements();
-
-}
-
-
-function observeRevealElements() {
-
-    const elements =
-        document.querySelectorAll(
-            ".reveal"
-        );
-
-    if (!elements.length) return;
-
-    if (
-        !("IntersectionObserver" in window)
-    ) {
-
-        elements.forEach(
-            element =>
-                element.classList.add(
-                    "visible"
-                )
-        );
-
+    if (!toast)
         return;
 
-    }
 
-    const observer =
-        new IntersectionObserver(
-            entries => {
-
-                entries.forEach(entry => {
-
-                    if (
-                        entry.isIntersecting
-                    ) {
-
-                        entry.target.classList.add(
-                            "visible"
-                        );
-
-                        observer.unobserve(
-                            entry.target
-                        );
-
-                    }
-
-                });
-
-            },
-            {
-                threshold: 0.12
-            }
-        );
-
-    elements.forEach(
-        element =>
-            observer.observe(element)
+    toast.classList.remove(
+        "show"
     );
 
-}
 
-
-/* =========================================================
-   22. BACK TO TOP
-   ========================================================= */
-
-function setupBackToTop() {
-
-    const button =
-        document.querySelector(
-            "#backToTop"
-        );
-
-    if (!button) return;
-
-    window.addEventListener(
-        "scroll",
+    setTimeout(
         () => {
 
-            if (
-                window.scrollY > 400
-            ) {
+            toast.remove();
 
-                button.classList.add(
-                    "show"
-                );
-
-            } else {
-
-                button.classList.remove(
-                    "show"
-                );
-
-            }
-
-        }
-    );
-
-    button.addEventListener(
-        "click",
-        () => {
-
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
-
-        }
+        },
+        300
     );
 
 }
 
 
 /* =========================================================
-   23. GLOBAL CLICK HANDLERS
-   ========================================================= */
+   37. ANIMATIONS
+========================================================= */
 
-function setupGlobalClicks() {
+function initializeDashboard() {
 
-    document.addEventListener(
-        "click",
-        event => {
+    document
+        .querySelectorAll(
+            ".stat-card, .panel, .quick-card"
+        )
+        .forEach(
+            (element, index) => {
 
-            /* Close modal when clicking outside */
-
-            const modal =
-                document.querySelector(
-                    "#roomModal"
-                );
-
-            if (
-                modal &&
-                event.target === modal
-            ) {
-
-                closeModal();
+                element.style.animationDelay =
+                    `${index * 0.05}s`;
 
             }
-
-            /* Close mobile navigation */
-
-            if (
-                event.target.closest(
-                    "#mainNav a"
-                )
-            ) {
-
-                const nav =
-                    document.querySelector(
-                        "#mainNav"
-                    );
-
-                if (nav) {
-                    nav.classList.remove(
-                        "active"
-                    );
-                }
-
-            }
-
-        }
-    );
-
-
-    /* ESC closes modal */
-
-    document.addEventListener(
-        "keydown",
-        event => {
-
-            if (event.key === "Escape") {
-
-                closeModal();
-
-            }
-
-        }
-    );
+        );
 
 }
 
 
 /* =========================================================
-   24. UTILITY FUNCTIONS
-   ========================================================= */
+   38. CURRENT YEAR
+========================================================= */
 
-function getInputValue(id) {
+function updateCurrentYear() {
 
-    const element =
-        document.getElementById(id);
+    document
+        .querySelectorAll(
+            "#currentYear"
+        )
+        .forEach(
+            element => {
 
-    return element
-        ? element.value.trim()
-        : "";
+                element.textContent =
+                    new Date()
+                        .getFullYear();
 
-}
-
-
-function setInputValue(
-    id,
-    value
-) {
-
-    const element =
-        document.getElementById(id);
-
-    if (element) {
-        element.value = value;
-    }
-
-}
-
-
-function escapeHTML(value) {
-
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
-}
-
-
-/* =========================================================
-   25. RENT CALCULATOR
-   ========================================================= */
-
-function calculateRent() {
-
-    const rent =
-        Number(
-            getInputValue("calculatorRent")
-        );
-
-    const people =
-        Number(
-            getInputValue("calculatorPeople")
-        ) || 1;
-
-    if (!rent) {
-
-        showToast(
-            "Enter the monthly rent first.",
-            "error"
-        );
-
-        return;
-
-    }
-
-    const perPerson =
-        rent / people;
-
-    const result =
-        document.querySelector(
-            "#rentResult"
-        );
-
-    if (result) {
-
-        result.innerHTML = `
-
-            <strong>
-                ₹${perPerson.toLocaleString("en-IN")}
-            </strong>
-
-            <span>
-                estimated rent per person / month
-            </span>
-
-        `;
-
-        result.classList.add(
-            "result-visible"
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   26. HOSTEL STATISTICS
-   ========================================================= */
-
-function getHostelStatistics() {
-
-    const statistics = {};
-
-    rooms.forEach(room => {
-
-        if (!statistics[room.hostel]) {
-
-            statistics[room.hostel] = {
-                rooms: 0,
-                beds: 0,
-                occupied: 0,
-                revenue: 0
-            };
-
-        }
-
-        statistics[room.hostel].rooms++;
-
-        statistics[room.hostel].beds +=
-            Number(room.capacity);
-
-        statistics[room.hostel].occupied +=
-            Number(room.occupied);
-
-        statistics[room.hostel].revenue +=
-            Number(room.rent) *
-            Number(room.occupied);
-
-    });
-
-    return statistics;
-
-}
-
-
-/* =========================================================
-   27. EXPORT DATA
-   ========================================================= */
-
-function exportRooms() {
-
-    if (!rooms.length) {
-
-        showToast(
-            "No room data available.",
-            "error"
-        );
-
-        return;
-
-    }
-
-    const data =
-        JSON.stringify(
-            rooms,
-            null,
-            2
-        );
-
-    const blob =
-        new Blob(
-            [data],
-            {
-                type:
-                    "application/json"
             }
         );
 
-    const url =
-        URL.createObjectURL(blob);
-
-    const link =
-        document.createElement("a");
-
-    link.href = url;
-
-    link.download =
-        "rentease-room-data.json";
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    link.remove();
-
-    URL.revokeObjectURL(url);
-
-    showToast(
-        "Room data exported successfully! 📦",
-        "success"
-    );
-
 }
 
 
 /* =========================================================
-   28. IMPORT DATA
-   ========================================================= */
-
-function importRooms(event) {
-
-    const file =
-        event.target.files?.[0];
-
-    if (!file) return;
-
-    const reader =
-        new FileReader();
-
-    reader.onload = function () {
-
-        try {
-
-            const imported =
-                JSON.parse(
-                    reader.result
-                );
-
-            if (!Array.isArray(imported)) {
-
-                throw new Error(
-                    "Invalid format"
-                );
-
-            }
-
-            rooms = imported;
-
-            saveRooms();
-
-            renderRooms();
-
-            updateDashboard();
-
-            showToast(
-                "Room data imported successfully! 🎉",
-                "success"
-            );
-
-        } catch (error) {
-
-            showToast(
-                "Invalid room data file.",
-                "error"
-            );
-
-        }
-
-    };
-
-    reader.readAsText(file);
-
-}
-
-
-/* =========================================================
-   29. RESET DEMO DATA
-   ========================================================= */
-
-function resetDemoData() {
-
-    const confirmed =
-        confirm(
-            "Reset all room data to the original demo data?"
-        );
-
-    if (!confirmed) return;
-
-    rooms =
-        [...demoRooms];
-
-    saveRooms();
-
-    renderRooms();
-
-    updateDashboard();
-
-    showToast(
-        "Demo data restored.",
-        "success"
-    );
-
-}
-
-
-/* =========================================================
-   30. KEYBOARD SHORTCUTS
-   ========================================================= */
+   39. GENERIC MODAL ESCAPE
+========================================================= */
 
 document.addEventListener(
     "keydown",
     event => {
 
-        /* Ctrl + K = Search */
-
         if (
-            event.ctrlKey &&
-            event.key.toLowerCase() === "k"
+            event.key ===
+            "Escape"
         ) {
 
-            event.preventDefault();
+            closeModal();
 
-            const search =
+            closeBookingModal();
+
+            const success =
                 document.querySelector(
-                    "#roomSearch"
+                    "#successModal"
                 );
 
-            if (search) {
 
-                search.focus();
+            if (success) {
+
+                success.classList.remove(
+                    "active"
+                );
 
             }
-
-        }
-
-        /* Ctrl + N = New room */
-
-        if (
-            event.ctrlKey &&
-            event.key.toLowerCase() === "n"
-        ) {
-
-            event.preventDefault();
-
-            openModal();
 
         }
 
@@ -1959,59 +4986,77 @@ document.addEventListener(
 
 
 /* =========================================================
-   31. GLOBAL FUNCTIONS
-   ========================================================= */
+   40. GLOBAL FUNCTIONS
+========================================================= */
 
-window.loginUser = loginUser;
-window.logoutUser = logoutUser;
+window.toggleTheme =
+    toggleTheme;
 
-window.addRoom = addRoom;
-window.editRoom = editRoom;
-window.updateRoom = updateRoom;
-window.deleteRoom = deleteRoom;
+window.logoutUser =
+    logoutUser;
 
-window.openModal = openModal;
-window.closeModal = closeModal;
+window.openRoomModal =
+    openRoomModal;
 
-window.toggleTheme = toggleTheme;
+window.editRoom =
+    editRoom;
 
-window.calculateRent = calculateRent;
+window.deleteRoom =
+    deleteRoom;
 
-window.exportRooms = exportRooms;
-window.importRooms = importRooms;
+window.openTenantModal =
+    openTenantModal;
 
-window.resetDemoData = resetDemoData;
+window.deleteTenant =
+    deleteTenant;
 
-window.filterRooms = filterRooms;
+window.openComplaintModal =
+    openComplaintModal;
+
+window.openNoticeModal =
+    openNoticeModal;
+
+window.openBookingModal =
+    openBookingModal;
+
+window.closeBookingModal =
+    closeBookingModal;
+
+window.closeModal =
+    closeModal;
+
+window.resetFilters =
+    resetFilters;
+
+window.markPaymentPaid =
+    markPaymentPaid;
+
+window.showSection =
+    showSection;
 
 
 /* =========================================================
-   32. CONSOLE INFORMATION
-   ========================================================= */
+   41. START MESSAGE
+========================================================= */
 
 console.log(
     "%c🏠 RentEase",
-    "font-size: 22px; font-weight: bold;"
+    "font-size:24px;font-weight:800;"
 );
 
 console.log(
-    "%cRoom & Hostel Management System",
-    "font-size: 14px;"
+    "%cSmart Room & Hostel Management System",
+    "font-size:14px;"
 );
 
 console.log(
-    "%cGitHub Pages Edition 🚀",
-    "font-size: 13px;"
+    `Rooms: ${rooms.length}`
 );
 
 console.log(
-    "Keyboard shortcuts:"
+    `Tenants: ${tenants.length}`
 );
 
 console.log(
-    "Ctrl + K → Search rooms"
-);
-
-console.log(
-    "Ctrl + N → Add new room"
+    "RentEase initialized successfully 🚀"
 );
